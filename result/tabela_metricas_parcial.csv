@@ -1,0 +1,4 @@
+Instância,Vértices,Arestas (Transações),Grau Médio,Qtd Comp. Fort. Conexas (SCC),Tamanho da Maior SCC
+Baseline,15311,38760,5.06,11859,3315
+Maduro_Total,22799,111380,9.77,16929,5756
+Khamenei_Total,18469,42510,4.6,16111,2319
