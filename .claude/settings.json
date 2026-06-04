@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import networkx; print\\('NetworkX OK', networkx.__version__\\)\")",
+      "Bash(pip3 list *)",
+      "Bash(pip install *)",
+      "Bash(python3 algorithms/01_pagerank_centralidade/run.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 algorithms/02_distribuicao_grau/run.py)",
+      "Bash(python3 algorithms/03_bowtie/run.py)",
+      "Bash(python3 algorithms/04_serie_temporal/run.py)",
+      "Bash(python3 algorithms/05_kcore/run.py)",
+      "Bash(python3 algorithms/06_motifs/run.py)",
+      "Bash(python3 algorithms/07_anomalia/run.py)",
+      "Bash(python3 algorithms/08_hits/run.py)"
+    ]
+  }
+}

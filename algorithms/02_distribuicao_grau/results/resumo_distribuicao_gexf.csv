@@ -1,0 +1,4 @@
+Grafo,Nos,Arestas,alpha_in_deg,alpha_out_deg,alpha_in_vol,alpha_out_vol,xmin_in,R_in,R_out
+Baseline,15311,20478,1.976,1.833,1.433,1.462,4.0,-0.023,-0.388
+Maduro,22799,38576,2.719,2.943,1.402,1.398,1.0,3.683,-193.385
+Khamenei,18469,23190,2.399,1.972,1.352,1.748,2.0,-10.249,-6.629

@@ -1,0 +1,398 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\geometry{margin=2.5cm}
+\graphicspath{{figures/}}
+
+\title{Análise Topológica da Rede de Transações do Token PEPE \\ sob Eventos Geopolíticos Extremos}
+\author{
+  Gabriel Alves de Arruda\textsuperscript{1} \and
+  Guilherme Brentan de Oliveira\textsuperscript{2} \\[6pt]
+  \small Professor \ Ruben Interian \\
+  \small Universidade Estadual de Campinas --- UNICAMP \\
+  \small MC859 --- Projeto em Teoria da Computação --- 2026S1
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ============================================================================
+\section{Introdução}
+% ============================================================================
+
+O cenário geopolítico de 2026 tem sido marcado por eventos de instabilidade política com impactos imediatos sobre a economia global. Nesse contexto, os criptoativos representam uma classe particularmente interessante para análise: operam em mercados digitais descentralizados, com negociação contínua e elevada sensibilidade a fatores externos. Além disso, blockchains públicas oferecem transparência transacional --- todas as transferências ficam registradas publicamente e podem ser analisadas computacionalmente.
+
+As transações em blockchain podem ser modeladas como um \textbf{grafo direcionado e ponderado}, no qual os vértices representam endereços públicos e as arestas representam transferências de tokens, ponderadas pelo volume transacionado. Essa modelagem permite a aplicação de algoritmos clássicos de análise de grafos para investigar padrões estruturais da rede: concentração de atividade, formação de comunidades, movimentação de grandes agentes e alterações topológicas em períodos de choque.
+
+O objetivo deste projeto é compreender como a rede de transações de um criptoativo se comporta diante de eventos geopolíticos extremos, buscando identificar se movimentos abruptos de mercado são impulsionados por poucos vértices altamente influentes ou por atividade distribuída. Para maximizar a observabilidade desses efeitos, escolhemos o token PEPE, uma das maiores \textit{memecoins} da rede Ethereum. Por sua natureza predominantemente especulativa, espera-se que o PEPE seja mais sensível a choques externos do que criptoativos consolidados como o Bitcoin.
+
+Selecionamos dois eventos de choque ocorridos em 2026: \textbf{(A)} o sequestro de Nicolás Maduro, em 03/01/2026; \textbf{(B)} o assassinato de Ali Khamenei, em 28/02/2026. Como referência, utilizamos um período de \textit{baseline} correspondente à semana de 16--23/10/2025, com baixa variação de preço.
+
+A descoberta central do projeto foi inesperada: os dois eventos produziram \textbf{perturbações topológicas diametralmente opostas}. Além disso, a janela temporal do Khamenei capturou inadvertidamente um evento de mercado independente (rally cripto + listagem na Binance), permitindo-nos distinguir, dentro do mesmo grafo, assinaturas de eventos de naturezas distintas. A análise também revelou que o hub mais influente durante o evento Maduro era um contrato de phishing --- demonstrando que a análise de grafos pode detectar atividade predatória como subproduto da investigação de mercado.
+
+% ============================================================================
+\section{Coleta de Dados e Instâncias}
+% ============================================================================
+
+\subsection{Extração dos dados}
+
+Para cada evento de choque, selecionou-se o intervalo de D$-$3 a D$+$3 (7 dias). As transações foram extraídas do \texttt{Google BigQuery}, dataset \texttt{crypto\_ethereum.token\_transfers}, filtrando pelo endereço do contrato PEPE (\texttt{0x6982...1933}):
+
+\begin{verbatim}
+SELECT from_address, to_address, block_timestamp,
+       SAFE_CAST(value AS FLOAT64)/1e18 AS pepe_amount
+FROM `bigquery-public-data.crypto_ethereum.token_transfers`
+WHERE token_address = '0x6982...1933'
+  AND DATE(block_timestamp) BETWEEN 'yyyy-mm-dd' AND 'yyyy-mm-dd'
+\end{verbatim}
+
+\subsection{Instâncias geradas}
+
+As transações foram modeladas como multi-dígrafos ponderados, onde cada aresta representa uma transferência individual com atributos: \texttt{edge\_weight} (volume de PEPE), \texttt{timestamp\_str} e \texttt{edge\_id} (hash da transação). Para os algoritmos estáticos, os multi-dígrafos foram convertidos em dígrafos simples, somando os pesos de arestas entre cada par (source, target).
+
+\begin{table}[H]
+\centering
+\caption{Estatísticas das instâncias geradas.}
+\label{tab:instancias}
+\begin{tabular}{lrrrrr}
+\toprule
+Instância & Vértices & Arestas & Grau médio & SCCs & Maior SCC \\
+\midrule
+Baseline        & 15.311  & 38.760   & 5,06  & 11.859 & 3.315 \\
+Maduro          & 22.799  & 111.380  & 9,77  & 16.929 & 5.756 \\
+Khamenei        & 18.469  & 42.510   & 4,60  & 16.111 & 2.319 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Dados de preço}
+
+Complementamos a análise on-chain com dados de preço diário do PEPE/USD obtidos via CoinGecko. O preço do PEPE subiu 73\% durante a janela Maduro (de \$4,14$\times10^{-6}$ para \$7,15$\times10^{-6}$), com volume de mercado explodindo de 195M para 1,79B USD no dia do sequestro. Na janela Khamenei, o preço \textit{caiu} 10,9\%, sem reação perceptível ao assassinato.
+
+% ============================================================================
+\section{Algoritmos}
+% ============================================================================
+
+Aplicamos oito algoritmos organizados em duas categorias: \textit{extração de conhecimento} (métricas estruturais da rede) e \textit{detecção de padrões} (identificação de anomalias e motifs). A Tabela~\ref{tab:algoritmos} resume a motivação e complexidade de cada um.
+
+\begin{table}[H]
+\centering
+\caption{Algoritmos aplicados.}
+\label{tab:algoritmos}
+\small
+\begin{tabular}{clll}
+\toprule
+\# & Algoritmo & Motivação & Complexidade \\
+\midrule
+\multicolumn{4}{l}{\textit{Extração de Conhecimento}} \\
+1 & PageRank + Centralidade & Identificar agentes influentes & $O((n+m) \cdot T)$ \\
+2 & Distribuição de Grau    & Verificar regime scale-free    & $O(n \log n)$ \\
+3 & Bow-Tie                 & Mapear fluxo direcional        & $O(n+m)$ \\
+4 & Série Temporal          & Localizar anomalias temporais  & $O((n+m) \cdot 7)$ \\
+\midrule
+\multicolumn{4}{l}{\textit{Detecção de Padrões}} \\
+5 & K-core                  & Profundidade de integração     & $O(n+m)$ \\
+6 & Motifs / Tríades        & Circuitos fechados (arbitragem)& $O(n \cdot \Delta^2)$ \\
+7 & Detecção de Anomalia    & Z-scores vs baseline           & $O(1)$ \\
+8 & HITS                    & Hubs vs Authorities            & $O((n+m) \cdot T)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A seguir, apresentamos o pseudocódigo dos quatro algoritmos mais relevantes para as descobertas do projeto. PageRank~\cite{page1999} e distribuição de grau~\cite{barabasi1999} foram utilizados conforme descrito na literatura. O censo de tríades segue a implementação do NetworkX~\cite{networkx}.
+
+\subsection{Decomposição Bow-Tie}
+
+A decomposição bow-tie~\cite{broder2000} particiona o grafo em quatro componentes, revelando o fluxo direcional de capital:
+
+\begin{algorithm}[H]
+\caption{Decomposição Bow-Tie}
+\begin{algorithmic}[1]
+\Require Dígrafo $G = (V, E)$
+\Ensure Conjuntos SCC, IN, OUT, OTHER
+\State $\text{SCCs} \gets$ componentes fortemente conexos de $G$
+\State $\text{SCC}_g \gets \arg\max_{S \in \text{SCCs}} |S|$
+\State Escolher $s \in \text{SCC}_g$
+\State $\text{Forward} \gets \text{BFS}(G, s)$ \Comment{nós alcançáveis a partir de $s$}
+\State $\text{Backward} \gets \text{BFS}(G^R, s)$ \Comment{nós que alcançam $s$ no reverso}
+\State $\text{IN} \gets \text{Backward} \setminus \text{SCC}_g$
+\State $\text{OUT} \gets \text{Forward} \setminus \text{SCC}_g$
+\State $\text{OTHER} \gets V \setminus (\text{SCC}_g \cup \text{IN} \cup \text{OUT})$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{K-core Decomposition}
+
+O k-core atribui a cada nó $v$ o maior $k$ tal que $v$ pertence ao subgrafo maximal onde todos têm grau $\geq k$~\cite{batagelj2003}:
+
+\begin{algorithm}[H]
+\caption{K-core Decomposition}
+\begin{algorithmic}[1]
+\Require Grafo não-dirigido $G_u$ (projeção de $G$)
+\Ensure $\text{core}(v)$ para cada $v \in V$
+\ForAll{$v \in V$} $\text{deg}(v) \gets \text{degree}(v)$ \EndFor
+\State $k \gets 0$
+\While{existem nós não removidos}
+  \State $k \gets k + 1$
+  \While{$\exists v : \text{deg}(v) < k$}
+    \State $\text{core}(v) \gets k - 1$
+    \State Remover $v$; atualizar $\text{deg}$ dos vizinhos
+  \EndWhile
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Detecção de Anomalia Estatística}
+
+Construímos uma distribuição de referência a partir dos dias do baseline e calculamos z-scores para cada dia de cada evento:
+
+\begin{algorithm}[H]
+\caption{Detecção de Anomalia via Z-score}
+\begin{algorithmic}[1]
+\Require Métricas diárias do baseline $\mathbf{B}$, do evento $\mathbf{E}$
+\Ensure $z_m(d)$ e anomaly\_score$(d)$ para cada dia $d$
+\ForAll{métrica $m \in \{$nós, SCC\%, OUT/IN, vol$_{\text{IN}\to\text{SCC}}$, Gini, PR$_{\text{top20}}\}$}
+  \State $\mu_m \gets \text{média}(\mathbf{B}[m])$; \quad $\sigma_m \gets \text{desvio}(\mathbf{B}[m])$
+\EndFor
+\ForAll{dia $d$ do evento}
+  \ForAll{métrica $m$}
+    \State $z_m(d) \gets (\mathbf{E}[m][d] - \mu_m) / \sigma_m$
+  \EndFor
+  \State anomaly\_score$(d) \gets \sum_m |z_m(d)|$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{HITS --- Hubs e Authorities}
+
+O algoritmo HITS~\cite{kleinberg1999} separa distribuidores (hubs) de acumuladores (authorities):
+
+\begin{algorithm}[H]
+\caption{HITS (Kleinberg)}
+\begin{algorithmic}[1]
+\Require Dígrafo $G = (V, E)$
+\Ensure $h(v)$, $a(v)$ para cada $v$
+\ForAll{$v \in V$} $h(v) \gets 1$; $a(v) \gets 1$ \EndFor
+\Repeat
+  \ForAll{$v \in V$} $a(v) \gets \sum_{(u,v) \in E} h(u)$ \EndFor
+  \ForAll{$v \in V$} $h(v) \gets \sum_{(v,w) \in E} a(w)$ \EndFor
+  \State Normalizar: $\mathbf{a} \gets \mathbf{a}/\|\mathbf{a}\|_2$; \quad $\mathbf{h} \gets \mathbf{h}/\|\mathbf{h}\|_2$
+\Until{convergência}
+\end{algorithmic}
+\end{algorithm}
+
+% ============================================================================
+\section{Resultados}
+% ============================================================================
+
+\subsection{O baseline: uma rede scale-free clássica}
+
+O grafo baseline apresenta distribuição de in-degree com expoente $\alpha = 1{,}976$ e razão de log-verossimilhança $R \approx 0$ (lei de potência e log-normal são estatisticamente indistinguíveis), confirmando um regime scale-free clássico compatível com o modelo de Barabási-Albert~\cite{barabasi1999}. A decomposição bow-tie revela estrutura equilibrada (SCC=22\%, IN=30\%, OUT=34\%), com razão OUT/IN $= 1{,}14$ e transitivity de 0,002.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{report_distribuicao_gexf.png}
+\caption{Distribuição de in-degree e out-degree (escala log-log) para os três grafos. A linha tracejada indica o ajuste de lei de potência. O baseline ($\alpha \approx 2{,}0$) é scale-free clássico.}
+\label{fig:grau}
+\end{figure}
+
+\subsection{Evento Maduro: adensamento do núcleo}
+
+O sequestro de Maduro coincidiu com uma valorização de 73\% do PEPE e explosão de volume de mercado (9,2$\times$ o dia anterior). Todas as métricas estruturais indicam \textbf{adensamento do núcleo} da rede:
+
+\begin{table}[H]
+\centering
+\caption{Comparação de métricas: Baseline vs Maduro vs Khamenei.}
+\label{tab:comparacao}
+\small
+\begin{tabular}{lrrr}
+\toprule
+Métrica & Baseline & Maduro & Khamenei \\
+\midrule
+SCC (\% nós) & 21,7\% & \textbf{25,2\%} & 12,6\% \\
+IN (\% nós) & 30,0\% & 32,2\% & \textbf{57,6\%} \\
+OUT (\% nós) & 34,2\% & 32,8\% & 21,6\% \\
+Razão OUT/IN & 1,14 & 1,02 & \textbf{0,38} \\
+$k_{\max}$ (K-core) & 8 & \textbf{10} & 8 \\
+\% nós $k=1$ & 71,5\% & 51,9\% & \textbf{81,9\%} \\
+Triângulos & 1.935 & \textbf{5.601} & 1.605 \\
+Tríades 300 & 78 & \textbf{494} & 78 \\
+Transitivity & 0,0021 & 0,0018 & \textbf{0,0001} \\
+Gini Volume & 0,983 & \textbf{0,992} & 0,989 \\
+Top-20 Vol Share & 41,2\% & \textbf{53,1\%} & 46,7\% \\
+$\alpha$ in-degree & 1,976 & 2,719 & 2,399 \\
+Gini Hub (HITS) & 0,975 & \textbf{1,000} & 0,222 \\
+Gini Auth (HITS) & 0,829 & 0,768 & \textbf{1,000} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{report_bowtie_gexf.png}
+\caption{Decomposição bow-tie e razão OUT/IN para os três grafos. O Khamenei apresenta 57,6\% de nós no componente IN (compradores unidirecionais).}
+\label{fig:bowtie}
+\end{figure}
+
+A SCC gigante cresceu de 21,7\% para 25,2\% e o $k_{\max}$ subiu de 8 para 10 --- indicando que o núcleo de agentes bidirecionais se tornou mais denso. O número de triângulos quase triplicou (1.935~$\to$~5.601) e as tríades do tipo 300 (ciclo bidirecional completo entre três agentes) saltaram de 78 para 494 ($+$534\%), consistente com atividade intensa de arbitragem ou trading cíclico entre agentes profissionais.
+
+O HITS revelou um hub dominante com score normalizado de 1,0: o endereço \texttt{0x301d9bc22d66f7bc49329a9d9eb16d3ecc4a12b4}, verificado via Etherscan como um contrato flagged \textbf{``Fake\_Phishing1685689''}. A descoberta de que o hub mais influente do período é um contrato malicioso tem implicações para segurança on-chain: períodos de alta volatilidade amplificam a eficácia de ataques de phishing, e a análise de grafos pode detectá-los.
+
+Outro achado relevante: a Binance aparece como \textbf{sink terminal} no componente OUT do grafo Maduro (endereço \texttt{0xf97781...}), recebendo 4,36 trilhões de tokens PEPE com zero transações de saída, $k$-core = 1. Esse perfil --- rank de in-volume = 6, mas rank de out-volume = 16.964 --- é a assinatura de uma cold wallet de custódia que absorveu capital durante o rally.
+
+\subsection{Janela Khamenei: decomposição de dois sinais}
+
+A janela Khamenei capturou dois fenômenos sobrepostos que a análise temporal permitiu separar.
+
+\subsubsection{D$-$3: evento de mercado (25/02/2026)}
+
+A análise temporal diária (Algoritmo~4) revelou que o dia 25/02/2026 (D$-$3 relativo ao assassinato) registrou \textbf{10.818 nós ativos} --- 4$\times$ a média do baseline --- em um pulso que colapsou para 2.465 nós no dia seguinte. A detecção de anomalia (Algoritmo~7) formalizou esse achado: anomaly score de 32,8 (o dobro do segundo dia mais anômalo), com z-scores superiores a $|2|$ em quatro métricas simultâneas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{report_heatmap_zscores.png}
+\caption{Heatmap de z-scores diários relativos ao baseline. Valores em negrito indicam $|z| > 2$. O D$-$3 de Khamenei apresenta as anomalias mais extremas do estudo ($z = 14{,}8$ em nós ativos).}
+\label{fig:heatmap}
+\end{figure}
+
+A investigação do contexto externo revelou que esse pico \textbf{não está relacionado ao assassinato de Khamenei}: em 25/02/2026 ocorreu um rebound macro do mercado cripto (BTC rompendo \$70k, entrada de \$52B em capital) combinado com o lançamento do par PEPE/U na Binance com taxas zero. Isso explica a onda de depósitos on-chain e é corroborado pelos dados de preço: o volume de mercado em D$-$3 (283M USD) foi normal, sem a explosão que seria esperada de um evento geopolítico.
+
+\subsubsection{D$-$1 a D$+$3: evento geopolítico}
+
+Após o pulso de D$-$3, o assassinato de Khamenei em D$=$0 teve impacto limitado: o preço caiu 10,9\% ao longo da janela, sem reversão. A rede contraiu para 1.700--2.200 nós por dia, com SCC recuperando para 22,8\% em D$+$2 (consolidação do núcleo). Em D$+$3, o anomaly score caiu para 7,5 --- dentro da variação normal.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{report_serie_temporal.png}
+\caption{Evolução diária de métricas estruturais. A faixa cinza indica a faixa de variação do baseline. O D$-$3 de Khamenei apresenta pico extremo em nós ativos e queda na SCC\%.}
+\label{fig:temporal}
+\end{figure}
+
+O HITS no grafo completo Khamenei revelou uma inversão sem precedentes: Gini hub = 0,222 e Gini authority = 1,000. A authority máxima (score = 1,0) é o endereço \texttt{0x28c6c06298d514db089934071355e5743bf21d60}, verificado como a \textbf{hot wallet da Binance}. A inversão significa que milhares de hubs homogêneos (compradores de varejo) depositaram simultaneamente na mesma authority (Binance).
+
+\subsubsection{BtcTurk e o nexo geopolítico}
+
+O endereço \texttt{0xb334a61a6209f14b5fa5f1684a4ed7621f66e1ef}, terceiro no ranking de PageRank e no $k$-core máximo ($k=8$, percentil 100\%) do grafo Khamenei, foi verificado como a exchange turca \textbf{BtcTurk}. A proeminência de uma exchange turca especificamente durante o assassinato do líder supremo iraniano tem uma explicação geopolítica plausível: a Turquia é vizinha e parceira comercial do Irã, e investidores turcos teriam exposição desproporcional à instabilidade regional.
+
+Esse endereço apresenta clustering local = 0 em todos os grafos, apesar de possuir 132 vizinhos únicos --- perfil de estrela pura, compatível com uma exchange centralizada cujos clientes não transacionam entre si diretamente.
+
+\subsection{Análise comparativa formal}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{report_anomaly_score.png}
+\caption{Anomaly score diário. O D$-$3 de Khamenei (32,8) é o dia mais anômalo do estudo. Todos os dias do Maduro superam o limiar do baseline.}
+\label{fig:anomaly}
+\end{figure}
+
+O Maduro apresenta anomalias persistentes: todos os 7 dias têm pelo menos uma métrica com $|z| > 2$, e o anomaly score não retorna ao nível do baseline dentro da janela. O Khamenei normaliza em D$+$3. Esses perfis de ``meia-vida'' diferentes refletem a natureza dos eventos: incerteza prolongada (Maduro) vs.\ choque abrupto absorvido rapidamente (Khamenei).
+
+A Figura~\ref{fig:hits} ilustra a separação funcional revelada pelo HITS: em nenhum dos três grafos um endereço aparece simultaneamente no top-20 de hubs \textit{e} authorities --- a rede opera com papéis especializados.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{report_hits_gexf.png}
+\caption{HITS: concentração de hubs vs authorities (esquerda) e posição das whales no espaço rank-hub $\times$ rank-authority (direita). A inversão de Gini no Khamenei é visível.}
+\label{fig:hits}
+\end{figure}
+
+% ============================================================================
+\section{Agentes-Chave}
+% ============================================================================
+
+A convergência de múltiplos algoritmos sobre os mesmos endereços valida a abordagem multi-algoritmo e permite a identificação de agentes com perfis funcionais distintos:
+
+\begin{table}[H]
+\centering
+\caption{Endereços-chave verificados via Etherscan.}
+\label{tab:agentes}
+\small
+\begin{tabular}{p{2.5cm}llp{5.5cm}}
+\toprule
+Endereço & Identificação & Grafo & Papel \\
+\midrule
+\texttt{0x28c6c0...} & Binance & Khamenei & Authority \#1 (HITS score=1,0). Destino da onda de depósitos. \\
+\texttt{0xf97781...} & Binance & Maduro & Sink terminal (4,36T PEPE, zero saídas, $k$=1, comp.\ OUT). \\
+\texttt{0x301d9b...} & Phishing & Maduro & Hub \#1 HITS (score=1,0). Contrato malicioso ativo na volatilidade. \\
+\texttt{0xb334a6...} & BtcTurk & Khamenei & PR \#3, $k_{\max}$=8, clustering=0. Exchange turca --- nexo geopolítico. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Um achado transversal: a Binance aparece como destino dominante em \textit{ambos} os eventos, mas em papéis estruturais distintos --- sink no Maduro (absorção de capital durante rally prolongado) e authority no Khamenei (destino de onda de depósitos de varejo). A exchange centralizada é o ponto de convergência da rede independentemente do tipo de evento.
+
+% ============================================================================
+\section{Discussão}
+% ============================================================================
+
+\subsection{Por que choques diferentes geram redes diferentes?}
+
+A hipótese que emerge dos resultados é que a \textit{natureza do choque} determina o \textit{tipo de participante mobilizado}, que por sua vez determina a \textit{assinatura topológica}:
+
+\begin{itemize}[nosep]
+\item \textbf{Incerteza prolongada} (Maduro): mobiliza agentes profissionais que operam bidirecionalmente ao longo de dias, adensando o núcleo (SCC$\uparrow$, $k_{\max}\uparrow$, triângulos$\uparrow$).
+\item \textbf{Evento de mercado de curta duração} (rally macro D$-$3): mobiliza varejo unidirecional que deposita em exchange centralizada, inundando a periferia (IN$\uparrow$, $k$=1$\uparrow$, transitivity$\downarrow$).
+\item \textbf{Choque abrupto em mercado de baixa} (assassinato Khamenei): impacto limitado, absorvido pela tendência existente.
+\end{itemize}
+
+\subsection{Atividade predatória amplificada por volatilidade}
+
+A detecção de um contrato de phishing como hub HITS \#1 durante o período de maior valorização (+73\%) tem implicações para a segurança do ecossistema. Contratos maliciosos se amplificam em momentos de euforia: mais usuários ativos, mais disposição a interagir com contratos desconhecidos. A análise de grafos pode servir como ferramenta de detecção, identificando hubs com padrão de distribuição anômalo.
+
+\subsection{Limitações}
+
+A janela do Khamenei capturou inadvertidamente um evento de mercado (D$-$3), o que exigiu análise temporal para decompor os sinais. Dados de preço intraday permitiriam correlação mais precisa. A identificação de endereços depende de bases externas (Etherscan), e o estudo mostra correlação, não causalidade.
+
+% ============================================================================
+\section{Conclusão}
+% ============================================================================
+
+A análise de oito algoritmos de grafos sobre a rede de transações do token PEPE revelou que a topologia muda de forma detectável e mensurável diante de eventos externos, mas \textit{de formas diferentes conforme a natureza do evento}. Choques de incerteza prolongada adensam o núcleo da rede via agentes profissionais; eventos de mercado abruptos inundam a periferia via varejo unidirecional; choques geopolíticos isolados em mercado de baixa têm impacto limitado.
+
+A convergência de múltiplos algoritmos sobre os mesmos endereços-chave --- Binance como destino dominante, BtcTurk como exchange regional com nexo geopolítico, e um contrato de phishing como hub mais influente durante volatilidade --- demonstra que a análise de grafos on-chain é uma ferramenta poderosa para investigar dinâmica de mercado e segurança em criptoativos.
+
+Como trabalho futuro, sugerimos a análise de múltiplos tokens em paralelo, janelas temporais maiores, dados intraday de preço para correlação mais precisa, e desenvolvimento de métodos automatizados de detecção de anomalias topológicas em tempo real.
+
+% ============================================================================
+\begin{thebibliography}{9}
+
+\bibitem{barabasi1999}
+A.-L.\ Barabási e R.\ Albert, ``Emergence of scaling in random networks,'' \textit{Science}, vol.~286, pp.~509--512, 1999.
+
+\bibitem{page1999}
+L.\ Page, S.\ Brin, R.\ Motwani e T.\ Winograd, ``The PageRank citation ranking: Bringing order to the web,'' Stanford InfoLab, Tech.\ Rep., 1999.
+
+\bibitem{kleinberg1999}
+J.\ M.\ Kleinberg, ``Authoritative sources in a hyperlinked environment,'' \textit{Journal of the ACM}, vol.~46, no.~5, pp.~604--632, 1999.
+
+\bibitem{broder2000}
+A.\ Broder et al., ``Graph structure in the web,'' \textit{Computer Networks}, vol.~33, pp.~309--320, 2000.
+
+\bibitem{batagelj2003}
+V.\ Batagelj e M.\ Zaversnik, ``An $O(m)$ algorithm for cores decomposition of networks,'' \textit{arXiv:cs/0310049}, 2003.
+
+\bibitem{alstott2014}
+J.\ Alstott, E.\ Bullmore e D.\ Plenz, ``powerlaw: A Python package for analysis of heavy-tailed distributions,'' \textit{PLoS ONE}, vol.~9, no.~1, 2014.
+
+\bibitem{networkx}
+A.\ A.\ Hagberg, D.\ A.\ Schult e P.\ J.\ Swart, ``Exploring network structure, dynamics, and function using NetworkX,'' in \textit{Proceedings of SciPy}, 2008.
+
+\end{thebibliography}
+
+\end{document}

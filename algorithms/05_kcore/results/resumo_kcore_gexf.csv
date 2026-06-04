@@ -1,0 +1,4 @@
+Grafo,Nos,k_max,k_median,k_mean,pct_k1,n_kmax
+Baseline,15311,8,1.0,1.38,0.7152,64
+Maduro,22799,10,1.0,1.71,0.5188,73
+Khamenei,18469,8,1.0,1.28,0.8187,54

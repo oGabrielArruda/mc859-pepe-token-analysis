@@ -1,0 +1,17 @@
+Grafo,descricao,address,rank_in_vol,in_degree,alpha_in_deg
+Baseline,Maduro-Hub,0xeae7380dd4cef6fbd1144f49e4d1e6964258a4f4,21,7,1.976
+Baseline,Maduro-Hub-2,0xfbd4cdb413e45a52e2c8312f670e9ce67e794c37,47,9,1.976
+Baseline,Khamenei-Antecipador,0xb334a61a6209f14b5fa5f1684a4ed7621f66e1ef,29,25,1.976
+Baseline,Khamenei-Hub,0xeb9ca8fdfac0652a97c0e1a48c1178d32d3a6b8f,152,1,1.976
+Baseline,Khamenei-Hub-2,0x9b0c45d46d386cedd98873168c36efd0dcba8d46,55,2,1.976
+Maduro,Maduro-Hub,0xeae7380dd4cef6fbd1144f49e4d1e6964258a4f4,2,26,2.719
+Maduro,Maduro-Sink,0xf977814e90da44bfa03b6295a0616a897441acec,6,1,2.719
+Maduro,Maduro-Hub-2,0xfbd4cdb413e45a52e2c8312f670e9ce67e794c37,11,13,2.719
+Maduro,Khamenei-Antecipador,0xb334a61a6209f14b5fa5f1684a4ed7621f66e1ef,22,73,2.719
+Maduro,Khamenei-Hub,0xeb9ca8fdfac0652a97c0e1a48c1178d32d3a6b8f,103,6,2.719
+Maduro,Khamenei-Hub-2,0x9b0c45d46d386cedd98873168c36efd0dcba8d46,88,13,2.719
+Khamenei,Maduro-Hub,0xeae7380dd4cef6fbd1144f49e4d1e6964258a4f4,55,6,2.399
+Khamenei,Maduro-Hub-2,0xfbd4cdb413e45a52e2c8312f670e9ce67e794c37,23,8,2.399
+Khamenei,Khamenei-Antecipador,0xb334a61a6209f14b5fa5f1684a4ed7621f66e1ef,5,15,2.399
+Khamenei,Khamenei-Hub,0xeb9ca8fdfac0652a97c0e1a48c1178d32d3a6b8f,24,2,2.399
+Khamenei,Khamenei-Hub-2,0x9b0c45d46d386cedd98873168c36efd0dcba8d46,14,3,2.399

@@ -1,0 +1,4 @@
+Grafo,Nos,Arestas,Gini_PR,Gini_Vol,Top20_share_PR,Top20_share_Vol,Overlap
+Baseline,15311,20478,0.6766,0.9832,0.2561,0.4116,12
+Maduro,22799,38576,0.6984,0.9921,0.3065,0.5312,14
+Khamenei,18469,23190,0.7695,0.9887,0.4063,0.4675,13

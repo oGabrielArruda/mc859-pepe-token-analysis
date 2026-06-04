@@ -1,0 +1,4 @@
+Grafo,Nos,Arestas,Triangulos,Pct_nos_em_tri,Transitivity,Avg_clustering,N_ciclos,N_ff,030C,300,030T
+Baseline,15311,20478,1935,0.0733,0.00209,8.7e-05,766,926,441,78,627
+Maduro,22799,38576,5601,0.0876,0.00179,1.1e-05,1567,2995,504,494,1865
+Khamenei,18469,23190,1605,0.0392,0.00011,5.3e-05,482,908,209,78,580
