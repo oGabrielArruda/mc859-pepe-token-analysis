@@ -24,7 +24,8 @@
   Gabriel Alves de Arruda\textsuperscript{1} \quad Guilherme Brentan de Oliveira\textsuperscript{2} \\[6pt]
   \small Professor Ruben Interian \\
   \small Universidade Estadual de Campinas (UNICAMP) \\
-  \small MC859: Projeto em Teoria da Computação, 2026S1
+  \small MC859: Projeto em Teoria da Computação, 2026S1 \\[6pt]
+  \small Repositório: \url{https://github.com/oGabrielArruda/mc859-pepe-token-analysis}
 }
 \date{}
 
@@ -322,7 +323,7 @@ Gini Auth (HITS) & 0,829 & 0,768 & \textbf{1,000} \\
 \label{fig:bowtie}
 \end{figure}
 
-A SCC gigante cresceu de 21,7\% para 25,2\% e o $k_{\max}$ subiu de 8 para 10, indicando que o núcleo de agentes bidirecionais se tornou mais denso. O número de triângulos quase triplicou (1.935~$\to$~5.601) e as tríades do tipo 300 (ciclo bidirecional completo entre três agentes) saltaram de 78 para 494 ($+$534\%), consistente com atividade intensa de arbitragem ou trading cíclico entre agentes profissionais. A transitivity global, por outro lado, caiu ligeiramente (0,0021~$\to$~0,0018): o aumento de 187\% nas arestas (38.760~$\to$~111.380) elevou o número de tripletos abertos mais rapidamente do que o de triângulos fechados, diluindo a fração de fechamento.
+A SCC gigante cresceu de 21,7\% para 25,2\% e o $k_{\max}$ subiu de 8 para 10, indicando que o núcleo de agentes bidirecionais se tornou mais denso. O número de triângulos quase triplicou (1.935~$\to$~5.601) e as tríades do tipo 300 (ciclo bidirecional completo entre três agentes) saltaram de 78 para 494 ($+$534\%), consistente com atividade intensa de arbitragem ou trading cíclico entre agentes profissionais. A transitivity global, por outro lado, caiu ligeiramente (0,0021~$\to$~0,0018): na projeção não-dirigida sobre a qual ela é calculada, as arestas cresceram 88\% (20.478~$\to$~38.576), mas a expansão de grau dos hubs elevou ainda mais rápido o número de tripletos abertos (caminhos de comprimento 2), diluindo a fração de fechamento.
 
 O HITS revelou um hub dominante com score normalizado de 1,0: o endereço \texttt{0x301d9b...}, cujo criador está sinalizado no Etherscan como \textbf{``Fake\_Phishing1685689''}. Seu padrão estrutural (hub que conecta a muitas authorities, sem ser ele próprio uma authority) é compatível tanto com um \textit{dust attack} (envio de quantidades mínimas a carteiras de alto valor para atrair interações fraudulentas) quanto com um roteador de liquidez. Distinguir as duas hipóteses exigiria inspeção das transações individuais, fora do escopo deste trabalho. Independentemente do mecanismo, o fato de que o endereço mais estruturalmente influente do período carrega uma flag de phishing demonstra que a análise de grafos pode sinalizar atividade potencialmente predatória como subproduto da investigação de mercado.
 
