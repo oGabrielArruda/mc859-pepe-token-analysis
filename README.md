@@ -65,5 +65,4 @@ Os dados são extraídos do dataset público `bigquery-public-data.crypto_ethere
 * **Gabriel Alves de Arruda** — RA: 248132
 * **Guilherme Brentan de Oliveira** — RA: 252764
 
-Disciplina MC859 Projeto em Teoria da Computação
-Universidade Estadual de Campinas (UNICAMP).
+Disciplina MC859 Projeto em Teoria da Computação — Universidade Estadual de Campinas (UNICAMP).
