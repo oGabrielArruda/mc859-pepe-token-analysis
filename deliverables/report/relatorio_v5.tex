@@ -385,7 +385,7 @@ A Figura~\ref{fig:hits} ilustra a separação funcional revelada pelo HITS. No b
 \section{Agentes-Chave}
 % ============================================================================
 
-A Tabela~\ref{tab:agentes} sintetiza os endereços-chave identificados pela convergência de múltiplos algoritmos. A identificação via Etherscan foi realizada \textit{a posteriori}, após os algoritmos apontarem independentemente para os mesmos endereços:
+A Tabela~\ref{tab:agentes} sintetiza os endereços-chave identificados pela convergência de múltiplos algoritmos. A identificação via Etherscan foi realizada posteriormente, após os algoritmos apontarem independentemente para os mesmos endereços:
 
 \begin{table}[H]
 \centering
@@ -431,40 +431,19 @@ A detecção de um endereço sinalizado como phishing na posição de hub HITS~\
 
 A janela do Khamenei capturou inadvertidamente um evento de mercado (D$-$3), o que exigiu análise temporal para decompor os sinais; essa sobreposição ilustra o desafio de isolar efeitos causais em dados observacionais. O baseline possui apenas 8 observações diárias, tornando os estimadores de média e desvio inerentemente instáveis; z-scores extremos como $z = 14{,}8$ devem ser interpretados qualitativamente (ruptura inequívoca do padrão normal), e não como probabilidades precisas. Dados de preço intraday permitiriam correlação temporal mais fina. A identificação de endereços depende de bases externas (Etherscan) e está sujeita a ambiguidades, como no caso do endereço \texttt{0x301d9b...}, cujo padrão estrutural é compatível tanto com phishing quanto com roteador de liquidez. O estudo mostra correlação topológica, não causalidade. Análises de sensibilidade, como a verificação da estabilidade dos z-scores sob escolha de outro período de baseline, são direções relevantes para trabalho futuro.
 
+
 % ============================================================================
 \section{Conclusão}
 % ============================================================================
 
-A análise de oito algoritmos de grafos sobre a rede de transações do token PEPE mostrou que a topologia muda de forma detectável e mensurável diante de eventos externos, e que essas mudanças variam conforme a natureza do evento. Na janela de incerteza prolongada (Maduro), o núcleo bidirecional da rede se adensou; na janela contaminada por um evento de mercado (Khamenei, D$-$3), a periferia unidirecional se inflou; o choque geopolítico isolado em mercado de baixa teve impacto estrutural limitado. Esses padrões emergem de um único evento de cada tipo e devem ser lidos como hipóteses a confirmar.
+Este trabalho modelou a rede de transações do token PEPE como um grafo direcionado e ponderado e aplicou oito algoritmos, organizados em extração de conhecimento e detecção de padrões, sobre três instâncias: um \textit{baseline} de baixa volatilidade e duas janelas de choque (o sequestro de Maduro e o assassinato de Khamenei). Partimos de duas perguntas: se eventos de naturezas distintas produzem assinaturas topológicas diferenciáveis, e se movimentos abruptos são impulsionados por poucos vértices influentes ou por atividade distribuída. Os resultados permitem responder a ambas.
 
-Vários algoritmos convergiram, de forma independente, sobre os mesmos endereços-chave: a Binance como destino dominante nos dois eventos (em papéis distintos), a BtcTurk como exchange regional com ascensão de ranking específica ao Khamenei, e um endereço sinalizado como phishing na posição de hub mais influente durante a alta de preço. Essa convergência mostra que diferentes métricas de grafo, aplicadas ao mesmo dado on-chain, apontam de forma consistente para os agentes que estruturam a rede em cada regime.
+Quanto à primeira pergunta, a topologia muda de forma detectável e mensurável diante de eventos externos, e a direção da mudança varia com a natureza do evento. Na janela de incerteza prolongada (Maduro), o núcleo bidirecional se adensou: SCC, $k_{\max}$, triângulos e tríades 300 cresceram em conjunto; na janela contaminada por um evento de mercado (Khamenei, D$-$3), a periferia unidirecional se inflou, com aumento do componente IN, dos nós de grau~1 e do funil em direção a \textit{exchanges} centralizadas, enquanto a transitividade colapsou; o choque geopolítico isolado em mercado de baixa teve impacto estrutural limitado. As duas janelas, portanto, produziram perturbações opostas, sugerindo que a natureza do choque, e não apenas sua magnitude, está associada ao tipo de assinatura observada. A análise temporal foi decisiva nesse ponto: foi ela que permitiu decompor a janela Khamenei em um pulso de mercado de curta duração (dissipado em poucos dias) e o evento geopolítico subjacente, separação que uma fotografia estática do grafo agregado teria ocultado.
 
-Como trabalho futuro, sugerimos a análise de múltiplos tokens em paralelo, janelas temporais maiores, dados intraday de preço para correlação mais precisa, e desenvolvimento de métodos automatizados de detecção de anomalias topológicas em tempo real.
+Quanto à segunda pergunta, a rede é fortemente concentrada em todos os regimes (Gini de volume $\approx 0{,}98$, com o top-20 chegando a 53\% do volume sob o evento Maduro) e tem cauda pesada consistente com regime \textit{scale-free} ($\alpha \approx 2{,}0$ no baseline). Os movimentos abruptos são conduzidos por poucos vértices de alta influência (hubs distribuidores e \textit{authorities} acumuladoras identificados pelo HITS), e não por atividade distribuída de forma homogênea. Graças a essa concentração, vários algoritmos apontaram, de forma independente, para os mesmos endereços. A Binance é o destino dominante nos dois eventos, mas em papéis distintos: \textit{sink} terminal no Maduro e \textit{authority} de alta conectividade no Khamenei. A BtcTurk aparece como \textit{exchange} regional, com salto de \textit{ranking} específico à janela iraniana. E um endereço marcado como \textit{phishing} ocupou a posição de hub mais influente justamente durante a maior alta de preço, um achado colateral que mostra que a análise de grafos também pode auxiliar a segurança on-chain, sinalizando padrões de distribuição anômalos para inspeção.
 
-% ============================================================================
-\begin{thebibliography}{9}
+Quanto aos algoritmos aplicados, os de extração de conhecimento deram o panorama da rede e a leitura do fluxo. O ajuste de lei de potência mostrou o regime de cauda pesada, o PageRank ordenou os agentes pela influência financeira de seus fluxos, e a decomposição bow-tie separou o núcleo da periferia. A análise temporal, aplicando essas métricas dia a dia, foi o que permitiu enxergar o pulso de D$-$3 que o grafo agregado escondia. Os algoritmos de detecção de padrões, por sua vez, detalharam o que mudava dentro dessa estrutura: o k-core mediu a profundidade do núcleo, o censo de tríades identificou os circuitos fechados de arbitragem, a detecção de anomalia resumiu a ruptura do baseline em um escore comparável entre dias, e o HITS separou os papéis de hub e \textit{authority}, isolando os endereços-chave. A leitura de cada janela se sustenta porque algoritmos de tipos diferentes (estruturais, de fluxo, de concentração e temporais) levaram à mesma conclusão.
 
-\bibitem{barabasi1999}
-A.-L.\ Barabási e R.\ Albert, ``Emergence of scaling in random networks,'' \textit{Science}, vol.~286, pp.~509--512, 1999.
-
-\bibitem{page1999}
-L.\ Page, S.\ Brin, R.\ Motwani e T.\ Winograd, ``The PageRank citation ranking: Bringing order to the web,'' Stanford InfoLab, Tech.\ Rep., 1999.
-
-\bibitem{kleinberg1999}
-J.\ M.\ Kleinberg, ``Authoritative sources in a hyperlinked environment,'' \textit{Journal of the ACM}, vol.~46, no.~5, pp.~604--632, 1999.
-
-\bibitem{broder2000}
-A.\ Broder et al., ``Graph structure in the web,'' \textit{Computer Networks}, vol.~33, pp.~309--320, 2000.
-
-\bibitem{batagelj2003}
-V.\ Batagelj e M.\ Zaversnik, ``An $O(m)$ algorithm for cores decomposition of networks,'' \textit{arXiv:cs/0310049}, 2003.
-
-\bibitem{alstott2014}
-J.\ Alstott, E.\ Bullmore e D.\ Plenz, ``powerlaw: A Python package for analysis of heavy-tailed distributions,'' \textit{PLoS ONE}, vol.~9, no.~1, 2014.
-
-\bibitem{networkx}
-A.\ A.\ Hagberg, D.\ A.\ Schult e P.\ J.\ Swart, ``Exploring network structure, dynamics, and function using NetworkX,'' in \textit{Proceedings of SciPy}, 2008.
-
-\end{thebibliography}
+Por fim, o que permanece em aberto não é se a análise de grafos enxerga a estrutura de um choque, uma vez que isso foi demonstrado ao longo do trabalho, mas se a associação entre a natureza do choque e o tipo de assinatura, observada aqui em dois casos, se mantém como regularidade geral. Responder a isso exige mais eventos e diferentes janelas de observação, capazes de evitar a sobreposição de sinais que afetou a janela Khamenei.
 
 \end{document}
